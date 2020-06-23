@@ -1,7 +1,13 @@
 #include <bluefruit.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
-
+#include <Arduino.h>
+#include "NewPing.h"
+#define TRIGGER_PIN 15
+#define ECHO_PIN 7
+#define MAX_DISTANCE 400
+NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+float distance;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
 BLEDis  bledis;  // device information
@@ -83,6 +89,11 @@ void startAdv(void)
 
 void loop()
 {
+  distance = sonar.ping_cm();
+  delay(5);
+  if (distance < 180){
+    bleuart.write("detected");
+  }
 
   // Forward data from HW Serial to BLEUART
   while (Serial.available())
@@ -94,7 +105,7 @@ void loop()
     int count = Serial.readBytes(buf, sizeof(buf));
     bleuart.write( buf, count );
   }
-
+  
 
 
 
