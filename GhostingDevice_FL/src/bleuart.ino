@@ -36,7 +36,13 @@ void setup()
 
   Bluefruit.begin();
   Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
-  Bluefruit.setName("FL");
+  char name[18];
+  name[0] = 'F';
+  name[1] = 'L';
+  for(int i = 2; i < 18;i++){
+    name[i] = getMcuUniqueID()[i-2];
+  }
+  Bluefruit.setName(name); 
   //Bluefruit.setName(getMcuUniqueID()); // useful testing with multiple central connections
   Bluefruit.Periph.setConnectCallback(connect_callback);
   Bluefruit.Periph.setDisconnectCallback(disconnect_callback);
