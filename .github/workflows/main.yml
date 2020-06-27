@@ -24,32 +24,31 @@ jobs:
     - name: Download PIO and Run
       run: |
            wget https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -O get-platformio.py
-python3 get-platformio.py
-
-          export PATH=$PATH:~/.platformio/penv/bin
-          cd GhostingDevice_CL
-          pio run
-          cd ..
-          cd GhostingDevice_CR
-          pio run
-          cd ..
-          cd GhostingDevice_FL
-          pio run
-          cd ..
-          cd GhostingDevice_FR
-          pio run
-          cd ..
-          cd GhostingDevice_LL
-          pio run
-          cd ..
-          cd GhostingDevice_LR
-          pio run
-          cd ..
-          cd InternalFS_test
-          pio run
-          cd ..
-          cd ultrasonic_test
-          pio run
-          cd ..
+           python3 get-platformio.py
+           export PATH=$PATH:~/.platformio/penv/bin
+           cd GhostingDevice_CL
+           pio run
+           cd ..
+           cd GhostingDevice_CR
+           pio run
+           cd ..
+           cd GhostingDevice_FL
+           pio run
+           cd ..
+           cd GhostingDevice_FR
+           pio run
+           cd ..
+           cd GhostingDevice_LL
+           pio run
+           cd ..
+           cd GhostingDevice_LR
+           pio run
+           cd ..
+           cd InternalFS_test
+           pio run
+           cd ..
+           cd ultrasonic_test
+           pio run
+           cd ..
           
           
