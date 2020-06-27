@@ -28,34 +28,34 @@ jobs:
            export PATH=$PATH:~/.platformio/penv/bin
            cd GhostingDevice_CL
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd GhostingDevice_CR
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd GhostingDevice_FL
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd GhostingDevice_FR
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd GhostingDevice_LL
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd GhostingDevice_LR
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
            cd InternalFS_test
-           pio run
+           pio check
            cd ..
            cd ultrasonic_test
            pio lib install "NewPing"
-           pio run
+           pio check
            cd ..
           
           
