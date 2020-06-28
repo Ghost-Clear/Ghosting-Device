@@ -98,7 +98,12 @@ void loop()
   distance = sonar.ping_cm();
   delay(5);
   if (distance < 180){
-    bleuart.write("detected");
+   if (digitalRead(PIN_A0) == HIGH){
+      bleuart.write("detected");
+      digitalWrite(PIN_A0,LOW);
+
+    }
+    
     delay(300);
   }
 
