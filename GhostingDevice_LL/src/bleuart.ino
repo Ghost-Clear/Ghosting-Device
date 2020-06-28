@@ -98,6 +98,7 @@ void loop()
   delay(5);
   if (distance < 180){
     bleuart.write("detected");
+    delay(300);
   }
 
   // Forward data from HW Serial to BLEUART
