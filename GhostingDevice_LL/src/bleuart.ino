@@ -103,7 +103,7 @@ void loop()
 
     }
     
-    delay(300);
+    delay(600);
   }
 
   // Forward data from HW Serial to BLEUART
