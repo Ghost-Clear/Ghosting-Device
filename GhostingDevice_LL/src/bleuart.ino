@@ -127,7 +127,12 @@ void loop()
     uint8_t ch;
     ch = (uint8_t) bleuart.read();
     Serial.write(ch);
-    digitalToggle(PIN_A0);
+    if ((char)ch == '1'){
+      digitalWrite(PIN_A0,HIGH);
+    }
+    else if ((char)ch == '0'){
+      digitalWrite(PIN_A0,LOW);
+    }
   }
 }
 
