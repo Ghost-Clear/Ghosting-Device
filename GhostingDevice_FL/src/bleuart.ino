@@ -18,7 +18,7 @@ void setup()
 {
   Serial.begin(9600);
   pinMode(PIN_A0, OUTPUT);
-
+  digitalWrite(PIN_A0, LOW);
 #if CFG_DEBUG
   // Blocking wait for connection when debug mode is enabled via IDE
   while ( !Serial ) yield();
