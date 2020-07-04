@@ -1,5 +1,7 @@
 # Ghosting-Device
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/37bc2bcdc0104ca2bc3f2d8b9159c68b)](https://app.codacy.com/manual/varunchitturi/Ghosting-Device?utm_source=github.com&utm_medium=referral&utm_content=varunchitturi/Ghosting-Device&utm_campaign=Badge_Grade_Dashboard)
+
 ## The official source code for the ghosting devices that connect to the Ghost Connect App
 
 These ghosting devices connect to the ghost connect app and relay information between it using BLE technology.
