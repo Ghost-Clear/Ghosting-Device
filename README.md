@@ -2,6 +2,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/4d49067b5e7546a598f560febd2e2aeb)](https://www.codacy.com/manual/varunchitturi/Ghosting-Device?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=varunchitturi/Ghosting-Device&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/varunchitturi/ghosting-device/badge)](https://www.codefactor.io/repository/github/varunchitturi/ghosting-device)
+[![Actions Status](https://github.com/varunchitturi/Ghosting-Device/workflows/Build/badge.svg)](https://github.com/varunchitturi/Ghosting-Device/actions)
 
 ## The official source code for the ghosting devices that connect to the Ghost Connect App
 
