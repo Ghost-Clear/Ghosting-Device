@@ -2,21 +2,17 @@
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include <Arduino.h>
-#include "NewPing.h"
-#define TRIGGER_PIN 15
-#define ECHO_PIN 7
-#define MAX_DISTANCE 400
-NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-float distance;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
 BLEDis  bledis;  // device information
 BLEUart bleuart; // uart over ble
 BLEBas  blebas;  // battery
-
+int count = 0;
+int previous;
 void setup()
 {
   Serial.begin(9600);
+  pinMode(PIN_A1,INPUT);
   pinMode(PIN_A0, OUTPUT);
   digitalWrite(PIN_A0, LOW);
 #if CFG_DEBUG
@@ -36,7 +32,7 @@ void setup()
 
   Bluefruit.begin();
   Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
- char name[18];
+  char name[18];
   name[0] = 'F';
   name[1] = 'R';
   for(int i = 2; i < 18;i++){
@@ -95,13 +91,19 @@ void startAdv(void)
 
 void loop()
 {
-  distance = sonar.ping_cm();
-  delay(5);
-  if (distance < 180){
+  int current = analogRead(PIN_A1);
+  if (count == 0){
+    previous = current;
+  }
+  if (abs(previous - current) >= 22){
+    previous = current;
+    count ++;
+  }
+  if (count % 2 == 0){
     if (digitalRead(PIN_A0) == HIGH){
       bleuart.write("detected");
       digitalWrite(PIN_A0,LOW);
-
+      count ++;
     }
     
     delay(600);
