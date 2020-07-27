@@ -5,7 +5,8 @@
 #include "NewPing.h"
 #define TRIGGER_PIN 15
 #define ECHO_PIN 7
-#define MAX_DISTANCE 400
+#define MAX_DISTANCE 300
+int c = 0;
 NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 float distance;
 // BLE Service
@@ -96,17 +97,20 @@ void startAdv(void)
 void loop()
 {
   distance = sonar.ping_cm();
+  delayMicroseconds(10);
+  Serial.println(distance);
   delay(5);
-  if (distance < 180){
-   if (digitalRead(PIN_A0) == HIGH){
+  if (distance < 180 && distance != 0){
+    c++;
+    if (digitalRead(PIN_A0) == HIGH && c % 2 == 0){
       bleuart.write("detected");
       digitalWrite(PIN_A0,LOW);
-
+      delay(700);
     }
-    
-    delay(600);
   }
-
+  else{
+    c = 0;
+  }
   // Forward data from HW Serial to BLEUART
   while (Serial.available())
   {
