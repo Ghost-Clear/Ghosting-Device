@@ -3,18 +3,21 @@
 #include <InternalFileSystem.h>
 #include <Arduino.h>
 #include "NewPing.h"
+#include <iostream>
 #define TRIGGER_PIN 15
 #define ECHO_PIN 7
-#define MAX_DISTANCE 300
+#define MAX_DISTANCE 500
+using namespace std;
 int c = 0;
 NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-float distance;
+unsigned int dist;
+bool lightOn = false;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
 BLEDis  bledis;  // device information
 BLEUart bleuart; // uart over ble
 BLEBas  blebas;  // battery
-
+ 
 void setup()
 {
   Serial.begin(9600);
@@ -96,21 +99,29 @@ void startAdv(void)
 
 void loop()
 {
-  distance = sonar.ping_cm();
-  delayMicroseconds(10);
-  Serial.println(distance);
-  delay(5);
-  if (distance < 180 && distance != 0){
-    c++;
-    if (digitalRead(PIN_A0) == HIGH && c % 2 == 0){
+
+  dist = sonar.ping_cm();
+  
+      if(dist >= 400 || dist <= 2){
+        Serial.println(500);
+      }
+      else{
+        Serial.println(dist);
+      }
+
+
+  if (dist > 180){
+    if (lightOn){
       bleuart.write("detected");
+      Serial.println("detected");
       digitalWrite(PIN_A0,LOW);
       delay(700);
     }
   }
-  else{
-    c = 0;
-  }
+  
+
+
+  /*
   // Forward data from HW Serial to BLEUART
   while (Serial.available())
   {
@@ -121,24 +132,22 @@ void loop()
     int count = Serial.readBytes(buf, sizeof(buf));
     bleuart.write( buf, count );
   }
-  
-
-
-
-
+  */
   // Forward from BLEUART to HW Serial
-  while ( bleuart.available() )
+  if ( bleuart.available() )
   {
     uint8_t ch;
     ch = (uint8_t) bleuart.read();
-    Serial.write(ch);
     if ((char)ch == '1'){
       digitalWrite(PIN_A0,HIGH);
+      lightOn = true;
     }
     else if ((char)ch == '0'){
       digitalWrite(PIN_A0,LOW);
+      lightOn = false;
     }
   }
+  delay(500);
 }
 
 // callback invoked when central connects
