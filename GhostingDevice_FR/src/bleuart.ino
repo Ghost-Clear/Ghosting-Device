@@ -4,13 +4,18 @@
 #include <Arduino.h>
 #include "NewPing.h"
 #include <iostream>
+#include <thread>
 #define TRIGGER_PIN 15
 #define ECHO_PIN 7
-#define MAX_DISTANCE 500
+#define MAX_DISTANCE 400
 using namespace std;
 int c = 0;
-NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-unsigned int dist;
+float x1, x2;
+int pingsSinceTrigger = 0;
+int numLEDPins = 8;
+int LEDpins [] = {27, PIN_A5, PIN_A4, PIN_A2, PIN_A1, 16, 11, 30};
+int batteryPIN = PIN_A3;
+NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);  
 bool lightOn = false;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
@@ -18,11 +23,37 @@ BLEDis  bledis;  // device information
 BLEUart bleuart; // uart over ble
 BLEBas  blebas;  // battery
  
+unsigned long previousSonarTime = 0;
+unsigned long previousLEDTime = 0;
+int currentLEDRotationIndex = 0;
+bool LEDRotation = false;
+
+
+void toggleLEDCircle(int ONOFF){
+  if(ONOFF == 1){
+    for(int i = 0; i < numLEDPins; i++){
+      digitalWrite(LEDpins[i],HIGH);
+    }
+  }
+  else if(ONOFF == 0){
+    for(int i = 0; i < numLEDPins; i++){
+      digitalWrite(LEDpins[i],LOW);
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(9600);
   pinMode(PIN_A0, OUTPUT);
   digitalWrite(PIN_A0, LOW);
+  for(int i = 0; i < numLEDPins; i++){
+    pinMode(LEDpins[i],OUTPUT);
+    digitalWrite(LEDpins[i], LOW);
+  }
+  pinMode(batteryPIN, OUTPUT);
+  digitalWrite(batteryPIN, LOW);
+
 #if CFG_DEBUG
   // Blocking wait for connection when debug mode is enabled via IDE
   while ( !Serial ) yield();
@@ -68,6 +99,9 @@ void setup()
 
   // Set up and start advertising
   startAdv();
+  x1 = sonar.ping_cm();
+  x2 = sonar.ping_cm();
+  pingsSinceTrigger += 2;
 }
 void startAdv(void)
 {
@@ -99,53 +133,54 @@ void startAdv(void)
 
 void loop()
 {
+      // unsigned long currentTime = millis();
 
-  dist = sonar.ping_cm();
+        if (lightOn){
+          x1 = x2;
+          x2 = sonar.ping_cm();
+          pingsSinceTrigger++;
+        }
+        else{
+          x2 = x1;
+          pingsSinceTrigger = 0;
+        }
+    
+        if(abs(x2 - x1) >= 3){
+          Serial.println(1);
+        }
+        else{
+          Serial.println(0);
+        }
+
+        if (abs(x2 - x1) >= 3 && pingsSinceTrigger >= 3 && lightOn){
+          bleuart.write("detected");
+          Serial.println("detected");
+          toggleLEDCircle(0);
+          lightOn = false;
+          pingsSinceTrigger = 0;
+        }
+      
+     
+
+
   
-      if(dist >= 400 || dist <= 2){
-        Serial.println(500);
-      }
-      else{
-        Serial.println(dist);
-      }
 
-
-  if (dist > 180){
-    if (lightOn){
-      bleuart.write("detected");
-      Serial.println("detected");
-      digitalWrite(PIN_A0,LOW);
-      delay(700);
-    }
-  }
-  
-
-
-  /*
-  // Forward data from HW Serial to BLEUART
-  while (Serial.available())
-  {
-    // Delay to wait for enough input, since we have a limited transmission buffer
-    delay(2);
-
-    uint8_t buf[64];
-    int count = Serial.readBytes(buf, sizeof(buf));
-    bleuart.write( buf, count );
-  }
-  */
-  // Forward from BLEUART to HW Serial
   if ( bleuart.available() )
   {
     uint8_t ch;
     ch = (uint8_t) bleuart.read();
     if ((char)ch == '1'){
-      digitalWrite(PIN_A0,HIGH);
+      toggleLEDCircle(1);
       lightOn = true;
     }
     else if ((char)ch == '0'){
-      digitalWrite(PIN_A0,LOW);
+      toggleLEDCircle(0);
       lightOn = false;
     }
+  }
+
+  if(pingsSinceTrigger > 100000){
+    pingsSinceTrigger = 100;
   }
   delay(500);
 }
@@ -153,6 +188,7 @@ void loop()
 // callback invoked when central connects
 void connect_callback(uint16_t conn_handle)
 {
+  toggleLEDCircle(0);
   // Get the reference to current connection
   BLEConnection* connection = Bluefruit.Connection(conn_handle);
 

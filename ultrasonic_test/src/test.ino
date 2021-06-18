@@ -7,13 +7,28 @@ NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
 float distance;
 int cycleCount = 0;
+int numLEDPins = 8;
+int LEDpins [] = {27, PIN_A5, PIN_A4, PIN_A2, PIN_A1, 16, 11, 30};
+int batteryPIN = PIN_A3;
+bool shouldFlash = false;
 void setup() {
   // put your setup code here, to run once:
+  
+  
+    for(int i = 0; i < numLEDPins; i++){
+      pinMode(LEDpins[i], OUTPUT);
+      digitalWrite(LEDpins[i],  HIGH);
+    }
+  
+ 
   Serial.begin(9600);
 
 }
 
 void loop() {
+
+
+  Serial.println(millis());
 
   // put your main code here, to run repeatedly:
     if(cycleCount % 300 == 0){
@@ -31,9 +46,6 @@ void loop() {
       }
   
     }
-  
-  
-
   delay(1);
   cycleCount++;
 }
