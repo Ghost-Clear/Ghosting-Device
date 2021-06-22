@@ -2,50 +2,31 @@
 #include "NewPing.h"
 #define TRIGGER_PIN 15
 #define ECHO_PIN 7
-#define MAX_DISTANCE 1000
-NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-
-float distance;
-int cycleCount = 0;
-int numLEDPins = 8;
-int LEDpins [] = {27, PIN_A5, PIN_A4, PIN_A2, PIN_A1, 16, 11, 30};
-int batteryPIN = PIN_A3;
-bool shouldFlash = false;
-void setup() {
-  // put your setup code here, to run once:
+unsigned int EchoPin = 7;   // The Arduino's the Pin2 connection to US-100 Echo / RX
+unsigned int TrigPin = 15;
+unsigned long Time_Echo_us = 0; 
+unsigned long Len_mm  = 0;  
+void setup() { 
   
+ //Initialize 
+ Serial.begin(9600);         //  The measurement results through the serial output to the serial port on the PC monitor
+ pinMode(EchoPin, INPUT);    //  The set EchoPin input mode.
+ pinMode(TrigPin, OUTPUT);   //  The set TrigPin output mode.
+}  
+
+void loop() {   
   
-    for(int i = 0; i < numLEDPins; i++){
-      pinMode(LEDpins[i], OUTPUT);
-      digitalWrite(LEDpins[i],  HIGH);
-    }
-  
- 
-  Serial.begin(9600);
-
-}
-
-void loop() {
-
-
-  Serial.println(millis());
-
-  // put your main code here, to run repeatedly:
-    if(cycleCount % 300 == 0){
-      distance = sonar.ping_cm();
-
-      //Serial.print("Distance = ");
-      if(distance >= 400 || distance <= 2){
-        //Serial.println("out of range");
-        Serial.println(500);
-        
-      }
-      else{
-        Serial.println(distance);
-        //Serial.println(" cm");
-      }
-  
-    }
-  delay(1);
-  cycleCount++;
-}
+  // By the Trig / Pin sending pulses trigger US-100 ranging
+ digitalWrite(TrigPin, HIGH);                         // Send pulses begin by Trig / Pin
+ delayMicroseconds(50);                               // Set the pulse width of 50us (> 10us)
+ digitalWrite(TrigPin, LOW);                          // The end of the pulse    
+ Time_Echo_us = pulseIn(EchoPin, HIGH);               // A pulse width calculating US-100 returned
+ if((Time_Echo_us < 60000) && (Time_Echo_us > 1)) {   // Pulse effective range (1, 60000).
+  // Len_mm = (Time_Echo_us * 0.34mm/us) / 2 (mm) 
+  Len_mm = (Time_Echo_us*34/100)/2;                   // Calculating the distance by a pulse width.   
+               // Output to the serial port monitor 
+  Serial.println(Len_mm, DEC);                          // Output to the serial port monitor   
+                            // Output to the serial port monitor
+ }  
+ delay(30);                                         // Per second (1000ms) measured
+} 

@@ -2,20 +2,17 @@
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include <Arduino.h>
-#include "NewPing.h"
 #include <iostream>
 #include <thread>
-#define TRIGGER_PIN 15
-#define ECHO_PIN 7
+unsigned int EchoPin = 7;   // The Arduino's the Pin2 connection to US-100 Echo / RX
+unsigned int TrigPin = 15;   // The Arduino's Pin3 connected to US-100 Trig / TX
+unsigned long Time_Echo_us = 0; 
+unsigned long Len_mm  = 0; 
 #define MAX_DISTANCE 400
 using namespace std;
-int c = 0;
-float x1, x2;
-int pingsSinceTrigger = 0;
 int numLEDPins = 8;
 int LEDpins [] = {27, PIN_A5, PIN_A4, PIN_A2, PIN_A1, 16, 11, 30};
 int batteryPIN = PIN_A3;
-NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);  
 bool lightOn = false;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
@@ -23,10 +20,7 @@ BLEDis  bledis;  // device information
 BLEUart bleuart; // uart over ble
 BLEBas  blebas;  // battery
  
-unsigned long previousSonarTime = 0;
-unsigned long previousLEDTime = 0;
-int currentLEDRotationIndex = 0;
-bool LEDRotation = false;
+
 
 
 void toggleLEDCircle(int ONOFF){
@@ -58,7 +52,9 @@ void setup()
   // Blocking wait for connection when debug mode is enabled via IDE
   while ( !Serial ) yield();
 #endif
-
+  Serial.begin(9600);         //  The measurement results through the serial output to the serial port on the PC monitor
+  pinMode(EchoPin, INPUT);    //  The set EchoPin input mode.
+  pinMode(TrigPin, OUTPUT);
   // Setup the BLE LED to be enabled on CONNECT
   // Note: This is actually the default behaviour, but provided
   // here in case you want to control this LED manually via PIN 19
@@ -99,9 +95,6 @@ void setup()
 
   // Set up and start advertising
   startAdv();
-  x1 = sonar.ping_cm();
-  x2 = sonar.ping_cm();
-  pingsSinceTrigger += 2;
 }
 void startAdv(void)
 {
@@ -133,37 +126,21 @@ void startAdv(void)
 
 void loop()
 {
-      // unsigned long currentTime = millis();
-
-        if (lightOn){
-          x1 = x2;
-          x2 = sonar.ping_cm();
-          pingsSinceTrigger++;
-        }
-        else{
-          x2 = x1;
-          pingsSinceTrigger = 0;
-        }
-    
-        if(abs(x2 - x1) >= 3){
-          Serial.println(1);
-        }
-        else{
-          Serial.println(0);
-        }
-
-        if (abs(x2 - x1) >= 3 && pingsSinceTrigger >= 3 && lightOn){
-          bleuart.write("detected");
-          Serial.println("detected");
-          toggleLEDCircle(0);
-          lightOn = false;
-          pingsSinceTrigger = 0;
-        }
-      
-     
-
-
-  
+  if (lightOn){
+    digitalWrite(TrigPin, HIGH);                         // Send pulses begin by Trig / Pin
+    delayMicroseconds(50);                               // Set the pulse width of 50us (> 10us)
+    digitalWrite(TrigPin, LOW);                          // The end of the pulse    
+    Time_Echo_us = pulseIn(EchoPin, HIGH);               // A pulse width calculating US-100 returned
+    if((Time_Echo_us < 60000) && (Time_Echo_us > 1)) {   // Pulse effective range (1, 60000).
+      Len_mm = (Time_Echo_us*34/100)/2;                   // Calculating the distance by a pulse width.   
+      if(Len_mm <= 2700){
+        toggleLEDCircle(0);
+         delay(800);
+        bleuart.write("detected");
+        lightOn = false;
+      }                            // Output to the serial port monitor
+    }  
+  }
 
   if ( bleuart.available() )
   {
@@ -178,11 +155,7 @@ void loop()
       lightOn = false;
     }
   }
-
-  if(pingsSinceTrigger > 100000){
-    pingsSinceTrigger = 100;
-  }
-  delay(500);
+  delay(20);
 }
 
 // callback invoked when central connects

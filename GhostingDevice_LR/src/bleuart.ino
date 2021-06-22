@@ -2,31 +2,59 @@
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include <Arduino.h>
-#include "NewPing.h"
 #include <iostream>
-#define TRIGGER_PIN 15
-#define ECHO_PIN 7
-#define MAX_DISTANCE 1000
+#include <thread>
+unsigned int EchoPin = 7;   // The Arduino's the Pin2 connection to US-100 Echo / RX
+unsigned int TrigPin = 15;   // The Arduino's Pin3 connected to US-100 Trig / TX
+unsigned long Time_Echo_us = 0; 
+unsigned long Len_mm  = 0; 
+#define MAX_DISTANCE 400
 using namespace std;
-int c = 0;
-NewPing sonar (TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-unsigned int dist;
+int numLEDPins = 8;
+int LEDpins [] = {27, PIN_A5, PIN_A4, PIN_A2, PIN_A1, 16, 11, 30};
+int batteryPIN = PIN_A3;
+bool lightOn = false;
 // BLE Service
 BLEDfu  bledfu;  // OTA DFU service
 BLEDis  bledis;  // device information
 BLEUart bleuart; // uart over ble
 BLEBas  blebas;  // battery
  
+
+
+
+void toggleLEDCircle(int ONOFF){
+  if(ONOFF == 1){
+    for(int i = 0; i < numLEDPins; i++){
+      digitalWrite(LEDpins[i],HIGH);
+    }
+  }
+  else if(ONOFF == 0){
+    for(int i = 0; i < numLEDPins; i++){
+      digitalWrite(LEDpins[i],LOW);
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(9600);
   pinMode(PIN_A0, OUTPUT);
   digitalWrite(PIN_A0, LOW);
+  for(int i = 0; i < numLEDPins; i++){
+    pinMode(LEDpins[i],OUTPUT);
+    digitalWrite(LEDpins[i], LOW);
+  }
+  pinMode(batteryPIN, OUTPUT);
+  digitalWrite(batteryPIN, LOW);
+
 #if CFG_DEBUG
   // Blocking wait for connection when debug mode is enabled via IDE
   while ( !Serial ) yield();
 #endif
-
+  Serial.begin(9600);         //  The measurement results through the serial output to the serial port on the PC monitor
+  pinMode(EchoPin, INPUT);    //  The set EchoPin input mode.
+  pinMode(TrigPin, OUTPUT);
   // Setup the BLE LED to be enabled on CONNECT
   // Note: This is actually the default behaviour, but provided
   // here in case you want to control this LED manually via PIN 19
@@ -98,58 +126,42 @@ void startAdv(void)
 
 void loop()
 {
-
-  dist = sonar.ping_cm();
-  
-      if(dist >= 400 || dist <= 2){
-        Serial.println(500);
-      }
-      else{
-        Serial.println(dist);
-      }
-
-
-  if ((dist < 180 && dist != 0) || dist >= 400){
-    if (digitalRead(PIN_A0) == HIGH){
-      bleuart.write("detected");
-      Serial.println("detected");
-      digitalWrite(PIN_A0,LOW);
-      delay(300);
-    }
+  if (lightOn){
+    digitalWrite(TrigPin, HIGH);                         // Send pulses begin by Trig / Pin
+    delayMicroseconds(50);                               // Set the pulse width of 50us (> 10us)
+    digitalWrite(TrigPin, LOW);                          // The end of the pulse    
+    Time_Echo_us = pulseIn(EchoPin, HIGH);               // A pulse width calculating US-100 returned
+    if((Time_Echo_us < 60000) && (Time_Echo_us > 1)) {   // Pulse effective range (1, 60000).
+      Len_mm = (Time_Echo_us*34/100)/2;                   // Calculating the distance by a pulse width.   
+      if(Len_mm <= 2700){
+        toggleLEDCircle(0);
+         delay(800);
+        bleuart.write("detected");
+        lightOn = false;
+      }                            // Output to the serial port monitor
+    }  
   }
-  
 
-
-  /*
-  // Forward data from HW Serial to BLEUART
-  while (Serial.available())
-  {
-    // Delay to wait for enough input, since we have a limited transmission buffer
-    delay(2);
-
-    uint8_t buf[64];
-    int count = Serial.readBytes(buf, sizeof(buf));
-    bleuart.write( buf, count );
-  }
-  */
-  // Forward from BLEUART to HW Serial
   if ( bleuart.available() )
   {
     uint8_t ch;
     ch = (uint8_t) bleuart.read();
     if ((char)ch == '1'){
-      digitalWrite(PIN_A0,HIGH);
+      toggleLEDCircle(1);
+      lightOn = true;
     }
     else if ((char)ch == '0'){
-      digitalWrite(PIN_A0,LOW);
+      toggleLEDCircle(0);
+      lightOn = false;
     }
   }
-  delay(300);
+  delay(20);
 }
 
 // callback invoked when central connects
 void connect_callback(uint16_t conn_handle)
 {
+  toggleLEDCircle(0);
   // Get the reference to current connection
   BLEConnection* connection = Bluefruit.Connection(conn_handle);
 
